@@ -1,6 +1,6 @@
 [build]
   # Build command
-  command = "vite build"
+  command = "npm run build"
   # Output directory for Netlify
   publish = "dist"
   # Base directory if your project is inside a subfolder
