@@ -1,6 +1,18 @@
 [build]
+  # Build command
   command = "vite build"
+  # Output directory for Netlify
   publish = "dist"
+  # Base directory if your project is inside a subfolder
+  # Uncomment and set this if needed
+  # base = "frontend"
 
 [build.environment]
   NODE_VERSION = "18"
+  NPM_VERSION = "9"
+
+# Redirect all routes to index.html for SPA routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
