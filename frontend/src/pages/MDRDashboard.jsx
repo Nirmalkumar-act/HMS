@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Tesseract from "tesseract.js";
 import * as pdfjsLib from "pdfjs-dist";
-import "../styles/MdrDashboard.css";
+import "../styles/MDRDashboard.css";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
