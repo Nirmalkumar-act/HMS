@@ -8,13 +8,12 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "http://localhost:5173") // or your frontend port
 public class UserController {
 
     @Autowired
     private UserRepository userRepository;
 
-    // ✅ Signup (Register New User)
+    // ✅ Signup
     @PostMapping("/register")
     public String registerUser(@RequestBody User user) {
         Optional<User> existing = userRepository.findByEmail(user.getEmail());
@@ -30,7 +29,7 @@ public class UserController {
     public Object loginUser(@RequestBody User user) {
         Optional<User> existing = userRepository.findByEmail(user.getEmail());
         if (existing.isPresent() && existing.get().getPassword().equals(user.getPassword())) {
-            return existing.get(); // return full user info
+            return existing.get(); // return user info
         }
         return "❌ Invalid credentials";
     }
