@@ -265,6 +265,43 @@ textarea.additional-notes:focus {
 .qr-container button {
   min-width: 120px;
 }
+.voice-btn {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 18px;
+  border-radius: 25px;
+  cursor: pointer;
+  display: inline-block;
+  font-weight: 600;
+  margin: 10px 0;
+  transition: 0.3s;
+}
+
+.voice-btn:hover {
+  background-color: #0056b3;
+}
+
+.voice-btn.active {
+  background-color: #e63946;
+  animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.6); }
+  70% { box-shadow: 0 0 0 12px rgba(230, 57, 70, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0); }
+}
+
+.speech-output {
+  font-style: italic;
+  color: #333;
+  margin-bottom: 15px;
+  background: #f9f9f9;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border-left: 4px solid #007bff;
+}
+
 
 /* =============================
    Animations

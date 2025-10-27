@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBooking } from "../context/BookingContext";
 import "../styles/Booking.css";
@@ -23,16 +23,85 @@ export default function Booking() {
   const [location, setLocation] = useState("");
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
-  const [gender, setGender] = useState(""); // 👈 added gender
+  const [gender, setGender] = useState("");
   const [weight, setWeight] = useState("");
   const [condition, setCondition] = useState("");
   const [doctor, setDoctor] = useState("");
   const [notes, setNotes] = useState("");
 
-  // Handle Submit
+  // Speech recognition
+  const [speechText, setSpeechText] = useState("");
+  const [listening, setListening] = useState(false);
+
+  useEffect(() => {
+    if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) return;
+
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+
+    recognition.onresult = (event) => {
+      let transcript = "";
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        transcript += event.results[i][0].transcript;
+      }
+      setSpeechText(transcript);
+      handleVoiceFill(transcript);
+    };
+
+    recognition.onerror = (event) => console.error(event.error);
+
+    if (listening) recognition.start();
+    else recognition.stop();
+
+    return () => recognition.stop();
+  }, [listening]);
+
+  const handleVoiceFill = (text) => {
+    const cleaned = text.toLowerCase().replace(/[.,]/g, "");
+
+    // Name
+    const nameMatch =
+      cleaned.match(/my name is (.+?)(?: age| gender| location| doctor|$)/) ||
+      cleaned.match(/name (?:is|as) (.+?)(?: age| gender| location| doctor|$)/);
+    if (nameMatch) setName(nameMatch[1].trim());
+
+    // Age
+    const ageMatch = cleaned.match(/age (?:is|of)? (\d{1,3})/);
+    if (ageMatch) setAge(ageMatch[1]);
+
+    // Gender
+    if (cleaned.includes("female")) setGender("Female");
+    else if (cleaned.includes("male")) setGender("Male");
+    else if (cleaned.includes("other")) setGender("Other");
+
+    // Weight
+    const weightMatch = cleaned.match(/weight (?:is|of)? (\d{1,3})/);
+    if (weightMatch) setWeight(weightMatch[1]);
+
+    // Location
+    const locationMatch =
+      cleaned.match(/location (?:is|at)? (.+?)(?: problem| condition| doctor|$)/) ||
+      cleaned.match(/i am from (.+?)(?: problem| condition| doctor|$)/);
+    if (locationMatch) setLocation(locationMatch[1].trim());
+
+    // Condition / Problem
+    const condMatch =
+      cleaned.match(/problem (?:is|of)? (.+?)(?: doctor|$)/) ||
+      cleaned.match(/condition (?:is|of)? (.+?)(?: doctor|$)/);
+    if (condMatch) setCondition(condMatch[1].trim());
+
+    // Doctor
+    const docMatch =
+      cleaned.match(/doctor (?:is|name is)? (.+?)(?: location| problem|$)/);
+    if (docMatch) setDoctor(docMatch[1].trim());
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (!name.trim() || !age || !gender || !location.trim() || !doctor.trim()) {
       alert("Please fill all required fields.");
       return;
@@ -57,7 +126,7 @@ export default function Booking() {
     });
 
     setNewToken(token);
-    setStep(3); // Show confirmation
+    setStep(3);
   };
 
   return (
@@ -67,6 +136,15 @@ export default function Booking() {
         <p className="muted">
           Choose an identification method → Fill details → Get Token.
         </p>
+
+        {/* Voice recognition toggle */}
+        <button
+          className={`btn ${listening ? "secondary" : "primary"}`}
+          onClick={() => setListening(!listening)}
+        >
+          {listening ? "🎙️ Stop Listening" : "🎤 Start Voice Fill"}
+        </button>
+        <p className="speech-preview">{speechText}</p>
 
         {/* Select method */}
         <label className="form-label">Select Identification Method</label>
@@ -89,7 +167,7 @@ export default function Booking() {
           ))}
         </div>
 
-        {/* Aadhaar Booking */}
+        {/* Aadhaar Booking Form */}
         {scanType === "AADHAAR" && (
           <form className="card form" onSubmit={handleSubmit}>
             <h2 className="step-title">🆔 GET TOKEN</h2>
@@ -119,7 +197,6 @@ export default function Booking() {
                 />
               </div>
 
-              {/* Gender Dropdown */}
               <div className="input-group">
                 <span className="input-icon">⚧️</span>
                 <select
@@ -187,7 +264,11 @@ export default function Booking() {
             />
 
             <div className="form-footer">
-              <button className="btn secondary" type="button" onClick={() => nav("/")}>
+              <button
+                className="btn secondary"
+                type="button"
+                onClick={() => nav("/")}
+              >
                 ← Cancel
               </button>
               <button className="btn primary pulse" type="submit">
@@ -197,10 +278,9 @@ export default function Booking() {
           </form>
         )}
 
-        {/* Online Booking */}
+        {/* Online Booking & Confirmation Steps */}
         {scanType === "ONLINE" && (
           <>
-            {/* Step 1: Hospital */}
             {step === 1 && (
               <form
                 className="card form"
@@ -231,7 +311,11 @@ export default function Booking() {
                   />
                 </div>
                 <div className="form-footer">
-                  <button className="btn secondary" type="button" onClick={() => nav("/")}>
+                  <button
+                    className="btn secondary"
+                    type="button"
+                    onClick={() => nav("/")}
+                  >
                     ← Cancel
                   </button>
                   <button className="btn primary pulse" type="submit">
@@ -241,7 +325,6 @@ export default function Booking() {
               </form>
             )}
 
-            {/* Step 2: Patient Details */}
             {step === 2 && (
               <form className="card form" onSubmit={handleSubmit}>
                 <h2 className="step-title">📝 Patient Details</h2>
@@ -271,7 +354,6 @@ export default function Booking() {
                     />
                   </div>
 
-                  {/* Gender Dropdown */}
                   <div className="input-group">
                     <span className="input-icon">⚧️</span>
                     <select
@@ -328,7 +410,11 @@ export default function Booking() {
                 />
 
                 <div className="form-footer">
-                  <button className="btn secondary" type="button" onClick={() => setStep(1)}>
+                  <button
+                    className="btn secondary"
+                    type="button"
+                    onClick={() => setStep(1)}
+                  >
                     ← Back
                   </button>
                   <button className="btn primary pulse" type="submit">
@@ -338,24 +424,39 @@ export default function Booking() {
               </form>
             )}
 
-            {/* Step 3: Confirmation */}
             {step === 3 && newToken && (
               <div className="card confirmation">
                 <h2>✅ Booking Confirmed</h2>
-                <p><b>Token:</b> {newToken}</p>
-                <p><b>Patient:</b> {name} ({age} yrs, {gender})</p>
-                <p><b>Doctor:</b> {doctor}</p>
-                <p><b>Hospital:</b> {hospital}</p>
-                <p><b>Booking Time:</b> {new Date().toLocaleTimeString()}</p>
+                <p>
+                  <b>Token:</b> {newToken}
+                </p>
+                <p>
+                  <b>Patient:</b> {name} ({age} yrs, {gender})
+                </p>
+                <p>
+                  <b>Doctor:</b> {doctor}
+                </p>
+                <p>
+                  <b>Hospital:</b> {hospital}
+                </p>
+                <p>
+                  <b>Booking Time:</b> {new Date().toLocaleTimeString()}
+                </p>
                 <hr />
                 <h3>⏳ Live Queue Status</h3>
                 <p className="queue-status">{getQueueStatus(newToken)}</p>
                 <p>Total Patients in Queue: {bookings.length}</p>
                 <div className="form-footer">
-                  <button className="btn primary" onClick={() => nav("/waiting")}>
+                  <button
+                    className="btn primary"
+                    onClick={() => nav("/waiting")}
+                  >
                     Go to Waiting Room
                   </button>
-                  <button className="btn secondary" onClick={() => nav("/dashboard")}>
+                  <button
+                    className="btn secondary"
+                    onClick={() => nav("/dashboard")}
+                  >
                     Doctor Dashboard
                   </button>
                 </div>
