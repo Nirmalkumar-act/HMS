@@ -20,26 +20,29 @@ export default function Login() {
     setToast("");
 
     try {
-      const res = await fetch(`${API_URL}/login`, {
+      const response = await fetch(`${API_URL}/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json().catch(() => res.text());
-      if (typeof data === "string" && data.includes("Invalid")) {
-        setToast("❌ Invalid credentials");
+      if (!response.ok) {
+        const message = await response.text();
+        setToast(`❌ ${message}`);
         return;
       }
 
-      login(data);
+      const user = await response.json();
+      login(user);
       setToast("✅ Login successful!");
+
       setTimeout(() => navigate("/"), 1000);
-    } catch (err) {
-      setToast("⚠️ Server error, please try again.");
+    } catch (error) {
+      setToast("⚠️ Backend not reachable (check server)");
     }
   };
-
   return (
     <div className="auth-page">
       <AnimatePresence>
@@ -56,9 +59,9 @@ export default function Login() {
       </AnimatePresence>
 
       <motion.div
+        className="auth-card"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="auth-card"
       >
         <h1>Welcome to HMS</h1>
         <p className="subtitle">Login to manage hospital efficiently</p>
@@ -101,7 +104,7 @@ export default function Login() {
           </motion.button>
 
           <p className="auth-links">
-            Don't have an account? <Link to="/signup">Sign up</Link>
+            Don&apos;t have an account? <Link to="/signup">Sign up</Link>
           </p>
         </form>
       </motion.div>
